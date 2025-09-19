@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Absence Monitoring System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            background: url('img/matexph.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+      .card-icon { 
+            font-size: 1.5rem;
+            margin-right: 15px;
+            padding: 10px;
+            width: 50px;       
+            height: 50px;      
+            display: flex;     
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; 
+            color: white; 
+            background:#4CAF50; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .input-card .card-icon {
+            background: #4CAF50;
+        }
+
+        .stats-card .card-icon {
+            background: #2196F3;
+        }
+
+        .report-card .card-icon {
+            background: #FF9800;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color\\0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .shift-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .shift-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .shift-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .comparison-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            flex: 1 1 480px; /* grow, shrink, base width */
+            min-width: 320px;
+        }
+
+        .comparison-card .chart-container { 
+            height: 320px; 
+            margin-top: 10px; 
+        }
+
+        @media (max-width: 900px) {
+            .comparison-card { flex: 1 1 100%; }
+            .comparison-card .chart-container { height: 300px; }
+        }
+
+        .category-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .category-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .category-matex {
+            background: linear-gradient(135deg, #57C84D, #2EB62C);
+        }
+
+        .category-avance {
+            background: linear-gradient(135deg, #44628D, #18346A);
+        }
+
+        .category-hrpro {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        .category-leave {
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+        }
+
+        .percentage-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .category-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .month-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #17a2b8;
+        }
+
+        @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+            
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+            
+        .category-stats {
+            grid-template-columns: 1fr;
+        }
+            
+        .month-selector {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1><i class="fas fa-chart-line"></i> MPDI Daily Absence Monitoring System</h1>
+                <p>Track and analyze workplace absences across Matex, Avance, HR Pro, & Leave/Rest Days.</p>
+            </div>
+            
+        <div class="navbar">            
+        <a href="absence-monitoring-system.html">🏠Home</a>
+        <a href="daily-report.html">📋 Daily Monitoring</a>
+        <a href="monthly-report.html">📊 Monthly Report</a>
+        <a href="manpower.html">📊 Manpower</a>
+        <a href="index.html">📂 Upload File</a>
+        <a href="employees.php">📂 All Records</a>
+        <a href="manpower.php">📂 MP Records</a>
+        </div>
+
+        <style>
+        .navbar {
+                background: #4CAF50;
+                padding: 12px;
+                text-align: center;
+                margin-bottom: 20px;
+                border-radius: 6px;
+        }
+        .navbar a {
+                color: white;
+                text-decoration: none;
+                font-weight: bold;
+                margin: 0 15px;
+                font-size: 16px;
+        }
+        .navbar a:hover {
+                text-decoration: underline;
+        }
+        </style>
+
+        <div class="dashboard">
+            <!-- Daily Input Card -->
+            <div class="card input-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="card-title">Daily Absence Input</div>
+                </div>
+
+                <form id="absenceForm">
+                    <div class="form-group">
+                        <label for="currentDate">Date</label>
+                        <input type="date" id="currentDate" class="form-control" required>
+                    </div>
+
+                    <div class="shift-selector">
+                        <div class="shift-btn active" data-shift="day">
+                            <i class="fas fa-sun"></i> Day Shift
+                        </div>
+                        <div class="shift-btn" data-shift="night">
+                            <i class="fas fa-moon"></i> Night Shift
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="totalEmployees">Total Employees</label>
+                            <input type="number" id="totalEmployees" class="form-control" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="totalAbsent">Total Absent</label>
+                            <input type="number" id="totalAbsent" class="form-control" min="0" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Absent by Category</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="matexAbsent">Matex</label>
+                                <input type="number" id="matexAbsent" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="avanceAbsent">Avance</label>
+                                <input type="number" id="avanceAbsent" class="form-control" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="hrproAbsent">HR Pro</label>
+                            <input type="number" id="hrproAbsent" class="form-control" min="0" value="0">
+                        </div>
+                         <div class="form-group">
+                        <label>Leave/Rest Day: 
+                        <input type="number" id="leaveAbsent" class="form-control" min="0" value="0">
+                        </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">
+                        <i class="fas fa-save"></i> Save Absence Data
+                    </button>
+                </form>
+            </div>
+
+            <!-- Today's Statistics Card -->
+            <div class="card stats-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="card-title">Today's Statistics</div>
+                </div>
+
+                <div id="todayStats">
+                    <div class="category-stats">
+                        <div class="category-item category-matex">
+                            <div class="percentage-display" id="matexPercentage">0%</div>
+                            <div class="category-label">Matex</div>
+                        </div>
+                        <div class="category-item category-avance">
+                            <div class="percentage-display" id="avancePercentage">0%</div>
+                            <div class="category-label">Avance</div>
+                        </div>
+                        <div class="category-item category-hrpro">
+                            <div class="percentage-display" id="hrproPercentage">0%</div>
+                            <div class="category-label">HR Pro</div>
+                        </div>
+                        <div class="category-item category-leave">
+                            <div class="percentage-display" id="leavePercentage">0%</div>
+                            <div class="category-label">Leave/RD</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="todayTotal">0</div>
+                            <div class="stat-label">Total Employees</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="todayAbsent">0</div>
+                            <div class="stat-label">Total Absent</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="todayPresent">0</div>
+                            <div class="stat-label">Present</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="overallPercentage">0%</div>
+                            <div class="stat-label">Absence Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card report-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="card-title">Quick Actions</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button class="btn btn-secondary" onclick="viewCurrentMonth()">
+                        <i class="fas fa-calendar-month"></i> View Current Month
+                    </button>
+                    <button class="btn btn-warning" onclick="generateMonthlyReport()">
+                        <i class="fas fa-file-alt"></i> Generate Monthly Report
+                    </button>
+                    <button class="btn" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+            <!-- Monthly Report Section -->
+        <div class="report-section" id="reportSection" style="display: none;">
+        <div class="card-header">
+            <div class="card-icon" style="background: #FF9800;">
+            <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="card-title">Monthly Absence Report</div>
+        </div>
+
+        <div class="month-selector">
+            <label for="reportMonth">Select Month:</label>
+            <input type="month" id="reportMonth" class="form-control" style="max-width: 200px;">
+            <button class="btn btn-secondary" onclick="loadMonthlyData()">
+            <i class="fas fa-refresh"></i> Load Data
+            </button>
+            <button class="btn btn-secondary" onclick="exportReportPDF()" id="exportReportBtn" style="margin-left:8px;">
+            <i class="fas fa-file-export"></i> Export as PDF
+            </button>
+            <button class="btn" id="exportExcelBtn" style="margin-left:8px;">
+           <i class="fas fa-file-excel"></i> Export as Excel
+           </button>
+        </div>
+
+        <!-- NEW: Shift Selector -->
+        <div class="shift-selector">
+            <div class="shift-btn active" data-shift="all">All</div>
+            <div class="shift-btn" data-shift="day">Day Shift</div>
+            <div class="shift-btn" data-shift="night">Night Shift</div>
+        </div>
+
+        <div class="loading" id="reportLoading">
+            <div class="spinner"></div>
+            <p>Generating report...</p>
+        </div>
+
+            <div id="reportContent">
+                <div class="stats-grid" id="monthlyStats"></div>
+                <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+                </div>
+                <div class="chart-container">
+                <canvas id="percentageChart"></canvas>
+                </div>
+                <div class="comparison-row">
+                <div class="comparison-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                <label for="yearSelect"><b>Monthly Comparison</b></label>
+                </div>
+                    <div style="display:flex;gap:8px;align-items:center;margin:6px 0;">
+                        <select id="yearSelect" class="form-control" style="max-width:120px;"></select>
+                        <select id="yearlyMonth" class="form-control" style="max-width:160px;"></select>
+                </div>
+                <div class="chart-container"><canvas id="yearlyChart"></canvas></div>
+                </div>
+
+                <div class="comparison-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                    <label><b>Yearly Comparison</b></label>
+                    </div>
+                <div style="display:flex;gap:8px;align-items:center;margin:6px 0;">
+                    <select id="yearCompareFrom" class="form-control" style="max-width:120px;"></select>
+                    <span>vs</span>
+                    <select id="yearCompareTo" class="form-control" style="max-width:120px;"></select>
+                    <button class="btn btn-secondary" id="btnCompareYears">Compare</button>
+                </div>
+                <p style="font-size:0.9rem;margin:6px 0;">Shows total absences per month for the selected years (filtered by selected shift).</p>
+                <div class="chart-container"><canvas id="monthCompareChart"></canvas></div>
+                </div>
+                </div>
+            </div>
+            </div>
+
+                <script>
+                const API_URL = "api.php";
+
+                    // Toast element for notifications (centered)
+                    const toast = document.createElement('div');
+                    toast.id = 'appToast';
+                    toast.style.position = 'fixed';
+                    toast.style.left = '50%';
+                    toast.style.top = '45%';
+                    toast.style.transform = 'translate(-50%, -50%)';
+                    toast.style.background = 'rgba(0,0,0,0.92)';
+                    toast.style.color = 'white';
+                    toast.style.padding = '18px 26px';
+                    toast.style.fontSize = '1.15rem';
+                    toast.style.fontWeight = '700';
+                    toast.style.borderRadius = '10px';
+                    toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.25)';
+                    toast.style.display = 'none';
+                    toast.style.zIndex = 100000;
+                    document.body.appendChild(toast);
+
+                    function showToast(msg, ms = 2200) {
+                        toast.innerText = msg;
+                        toast.style.display = 'block';
+                        toast.style.opacity = '1';
+                        // ensure it's on top and centered
+                        toast.style.left = '50%';
+                        toast.style.top = '45%';
+                        setTimeout(()=>{
+                            toast.style.transition = 'opacity 300ms';
+                            toast.style.opacity = '0';
+                            setTimeout(()=> toast.style.display = 'none', 300);
+                        }, ms);
+                    }
+
+            //  Save daily record
+            document.getElementById("absenceForm").addEventListener("submit", async function(e) {
+                e.preventDefault();
+
+                const date = document.getElementById("currentDate").value;
+                const totalEmployees = parseInt(document.getElementById("totalEmployees").value) || 0;
+                const totalAbsent = parseInt(document.getElementById("totalAbsent").value) || 0;
+                const matex = parseInt(document.getElementById("matexAbsent").value) || 0;
+                const avance = parseInt(document.getElementById("avanceAbsent").value) || 0;
+                const hrpro = parseInt(document.getElementById("hrproAbsent").value) || 0;
+                const leave = parseInt(document.getElementById("leaveAbsent").value) || 0;
+                const shift = document.querySelector(".shift-btn.active").dataset.shift;
+                const payload = {
+                    date,
+                    shift,
+                    totalEmployees,
+                    totalAbsent,
+                    categories: { matex, avance, hrpro, leave }
+                };
+
+                try {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok || (data && data.success === false)) {
+                        alert('Save failed: ' + (data.message || res.statusText));
+                        return;
+                    }
+                    // show toast instead of alert on success (exact message requested)
+                    showToast(' Data has been saved!');
+
+                    // Refresh today's stats and safe update of leave percentage
+                    await loadTodayStats(date, shift);
+                    try {
+                        const todayRes = await fetch(`${API_URL}?date=${date}`);
+                        const recs = await todayRes.json();
+                        const todayData = recs.find(r => r.shift === shift);
+                        if (todayData && totalEmployees > 0) {
+                            document.getElementById("leavePercentage").innerText =
+                                ((todayData.leave / totalEmployees) * 100).toFixed(1) + "%";
+                        }
+                    } catch (e) {
+                        console.error('Could not fetch today data for percentage update', e);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error saving data: ' + err.message);
+                }
+            });
+
+        // Load today's stats
+        async function loadTodayStats(date, shift) {
+        const res = await fetch(`${API_URL}?date=${date}`);
+        const records = await res.json();
+        const todayData = records.find(r => r.shift === shift);
+
+        if (!todayData) return;
+
+        const totalEmployees = todayData.totalEmployees;
+        const totalAbsent = todayData.totalAbsent;
+        const present = totalEmployees - totalAbsent;
+
+        document.getElementById("todayTotal").innerText = totalEmployees;
+        document.getElementById("todayAbsent").innerText = totalAbsent;
+        document.getElementById("todayPresent").innerText = present;
+        document.getElementById("overallPercentage").innerText =
+            ((totalAbsent / totalEmployees) * 100).toFixed(1) + "%";
+
+        document.getElementById("matexPercentage").innerText =
+            ((todayData.matex / totalEmployees) * 100).toFixed(1) + "%";
+        document.getElementById("avancePercentage").innerText =
+            ((todayData.avance / totalEmployees) * 100).toFixed(1) + "%";
+        document.getElementById("hrproPercentage").innerText =
+            ((todayData.hrpro / totalEmployees) * 100).toFixed(1) + "%";
+        }
+        function updateTotalAbsent() {
+        const matex = parseInt(document.getElementById("matexAbsent").value) || 0;
+        const avance = parseInt(document.getElementById("avanceAbsent").value) || 0;
+        const hrpro = parseInt(document.getElementById("hrproAbsent").value) || 0;
+        const leave = parseInt(document.getElementById("leaveAbsent").value) || 0;
+        document.getElementById("totalAbsent").value = matex + avance + hrpro + leave;
+        }
+
+        ["matexAbsent","avanceAbsent","hrproAbsent","leaveAbsent"].forEach(id=>{
+        document.getElementById(id).addEventListener("input", updateTotalAbsent);
+        });
+        //  View current month
+        function viewCurrentMonth() {
+        const today = new Date();
+        const ym = today.toISOString().slice(0,7); // YYYY-MM
+        document.getElementById("reportMonth").value = ym;
+        document.getElementById("reportSection").style.display = "block";
+            loadMonthlyData().then(() => loadMonthComparison());
+        }
+
+        //  Load monthly data
+        async function loadMonthlyData() {
+        const month = document.getElementById("reportMonth").value;
+        if (!month) return;
+
+        const res = await fetch(`${API_URL}?month=${month}`);
+        const records = await res.json();
+
+        if (!records.length) {
+            document.getElementById("monthlyStats").innerHTML = "<p>No data found.</p>";
+            return;
+        }
+
+        // Summary
+        const totalEmployees = records[0].totalEmployees; // same for all
+        const totalAbsent = records.reduce((sum, r) => sum + r.totalAbsent, 0);
+        const matexTotal = records.reduce((sum, r) => sum + r.matex, 0);
+        const avanceTotal = records.reduce((sum, r) => sum + r.avance, 0);
+        const hrproTotal = records.reduce((sum, r) => sum + r.hrpro, 0);
+
+        document.getElementById("monthlyStats").innerHTML = `
+            <p><b>Total Absent:</b> ${totalAbsent}</p>
+            <p><b>Matex Absent:</b> ${matexTotal}</p>
+            <p><b>Avance Absent:</b> ${avanceTotal}</p>
+            <p><b>HRPro Absent:</b> ${hrproTotal}</p>
+        `;
+
+        // Charts
+        const ctx1 = document.getElementById("monthlyChart").getContext("2d");
+        new Chart(ctx1, {
+            type: "bar",
+            data: {
+            labels: ["Matex", "Avance", "HRPro"],
+            datasets: [{
+                label: "Absences",
+                data: [matexTotal, avanceTotal, hrproTotal],
+                backgroundColor: ["#667eea", "#f093fb", "#4facfe"]
+            }]
+            }
+        });
+
+        const ctx2 = document.getElementById("trendChart").getContext("2d");
+        // If user wants to see all shifts, render two series (Day vs Night).
+        if (typeof selectedShift !== 'undefined' && selectedShift === 'all') {
+            // get unique sorted dates
+            const dates = [...new Set(records.map(r => r.date))].sort();
+            const dayData = dates.map(d => records
+                .filter(r => r.date === d && r.shift === 'day')
+                .reduce((s, r) => s + (parseInt(r.totalAbsent) || 0), 0)
+            );
+            const nightData = dates.map(d => records
+                .filter(r => r.date === d && r.shift === 'night')
+                .reduce((s, r) => s + (parseInt(r.totalAbsent) || 0), 0)
+            );
+
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx2, {
+                type: "line",
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: "Day Shift",
+                            data: dayData,
+                            borderColor: "#2196F3",
+                            backgroundColor: "rgba(33,150,243,0.08)",
+                            fill: false
+                        },  
+                        {
+                            label: "Night Shift",
+                            data: nightData,
+                            borderColor: "#4CAF50",
+                            backgroundColor: "rgba(76,175,80,0.08)",
+                            fill: false
+                        }
+                    ]
+                },
+                options: { responsive: true }
+            });
+            // Percentage chart (daily % = totalAbsent / totalEmployees * 100)
+            const pctCtx = document.getElementById('percentageChart').getContext('2d');
+            const dailyTotals = dates.map(d => records.filter(r => r.date === d).reduce((s, r) => s + (parseInt(r.totalAbsent)||0), 0));
+            const dailyPercentages = dailyTotals.map(t => totalEmployees>0 ? +(((t/totalEmployees)*100).toFixed(1)) : 0);
+            if (percentageChart) percentageChart.destroy();
+                percentageChart = new Chart(pctCtx, {
+                type: 'line',
+                data: { labels: dates, datasets: [{ label: 'Daily Absence %', data: dailyPercentages, borderColor: '#FF5722', fill: false }] },
+                options: { responsive: true, scales: { y: { ticks: { callback: v => v + '%' } } }, plugins: { tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } } }
+            });
+            } else {
+            if (trendChart) trendChart.destroy();
+            // single-series view filtered by selectedShift (or default)
+            const labels = records.map(r => r.date);
+            const dataPts = records.map(r => r.totalAbsent);
+            trendChart = new Chart(ctx2, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Daily Absences",
+                        data: dataPts,
+                        borderColor: "#FF9800",
+                        fill: false
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            // percentage chart for single-shift
+            const pctCtx = document.getElementById('percentageChart').getContext('2d');
+            const dailyPercentages = records.map(r => r.totalEmployees>0 ? +(((r.totalAbsent||0)/r.totalEmployees)*100).toFixed(1) : 0);
+            if (percentageChart) percentageChart.destroy();
+                percentageChart = new Chart(pctCtx, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ label: 'Daily Absence %', data: dailyPercentages, borderColor: '#FF5722', fill: false }] },
+                options: { responsive: true, scales: { y: { ticks: { callback: v => v + '%' } } }, plugins: { tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } } }
+            });
+        }
+        }
+
+        // Generate Monthly Report button
+        function generateMonthlyReport() {
+        document.getElementById("reportSection").style.display = "block";
+            // ensure a month is selected; default to current month if not
+            const monthInput = document.getElementById('reportMonth');
+            if (!monthInput.value) {
+                 monthInput.value = new Date().toISOString().slice(0,7); // YYYY-MM
+            }
+            loadMonthlyData().then(() => loadMonthComparison());
+        }
+
+    let selectedShift = "all";
+    let monthlyChart, trendChart, yearlyChart, percentageChart;
+
+        // Shift toggle for monthly section
+        document.querySelectorAll(".shift-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            document.querySelectorAll(".shift-btn").forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            selectedShift = this.dataset.shift;
+            loadMonthlyData();
+        });
+        });
+
+        //  Load monthly data
+        async function loadMonthlyData() {
+        const month = document.getElementById("reportMonth").value;
+        if (!month) return;
+
+        const res = await fetch(`${API_URL}?month=${month}`);
+        let records = await res.json();
+
+        // Filter by shift
+        if (selectedShift !== "all") {
+            records = records.filter(r => r.shift === selectedShift);
+        }
+
+        if (!records.length) {
+            document.getElementById("monthlyStats").innerHTML = "<p>No data found.</p>";
+            return;
+        }
+
+    // Summary
+        const totalEmployees = records[0].totalEmployees || 0;
+        const totalAbsent = records.reduce((sum, r) => sum + r.totalAbsent, 0);
+        const matexTotal = records.reduce((sum, r) => sum + r.matex, 0);
+        const avanceTotal = records.reduce((sum, r) => sum + r.avance, 0);
+        const hrproTotal = records.reduce((sum, r) => sum + r.hrpro, 0);
+
+        document.getElementById("monthlyStats").innerHTML = `
+            <p><b>Total Absent:</b> ${totalAbsent}</p>
+            <p><b>Matex Absent:</b> ${matexTotal}</p>
+            <p><b>Avance Absent:</b> ${avanceTotal}</p>
+            <p><b>HRPro Absent:</b> ${hrproTotal}</p>
+        `;
+
+        // Charts
+        const ctx1 = document.getElementById("monthlyChart").getContext("2d");
+        if (monthlyChart) monthlyChart.destroy();
+        monthlyChart = new Chart(ctx1, {
+            type: "bar",
+            data: {
+            labels: ["Matex", "Avance", "HRPro"],
+            datasets: [{
+            label: "Absences",
+            data: [matexTotal, avanceTotal, hrproTotal],
+            backgroundColor: ["#3cb371", "#f093fb", "#4facfe"]
+            }]
+            }
+        });
+
+        const ctx2 = document.getElementById("trendChart").getContext("2d");
+        if (trendChart) trendChart.destroy();
+        // If showing all shifts, render two series (Day vs Night). Otherwise single series
+        if (selectedShift === 'all') {
+            const dates = [...new Set(records.map(r => r.date))].sort();
+            const dayData = dates.map(d => records
+                .filter(r => r.date === d && r.shift === 'day')
+                .reduce((s, r) => s + (parseInt(r.totalAbsent) || 0), 0)
+            );
+            const nightData = dates.map(d => records
+                .filter(r => r.date === d && r.shift === 'night')
+                .reduce((s, r) => s + (parseInt(r.totalAbsent) || 0), 0)
+            );
+
+            trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Day Shift', data: dayData, borderColor: '#2196F3', fill: false },
+                        { label: 'Night Shift', data: nightData, borderColor: '#4CAF50', fill: false }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        } else {
+            trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: records.map(r => r.date),
+                    datasets: [{ label: 'Daily Absences', data: records.map(r => r.totalAbsent), borderColor: '#FF9800', fill: false }]
+                },
+                options: { responsive: true }
+            });
+        }
+        }
+
+    // Yearly Comparison Chart
+    async function loadYearlyComparison(year) {
+        if (!year) return;
+        const monthSelect = document.getElementById('yearlyMonth');
+        const monthVal = monthSelect ? monthSelect.value : 'all';
+        let url;
+        if (monthVal && monthVal !== 'all') {
+            // monthVal format is YYYY-MM
+            url = `${API_URL}?month=${monthVal}`;
+        } else {
+            url = `${API_URL}?year=${year}`;
+        }
+        const res = await fetch(url);
+        const records = await res.json();
+        if (!records.length) {
+            const ctx = document.getElementById("yearlyChart").getContext("2d");
+            if (yearlyChart) yearlyChart.destroy();
+            yearlyChart = new Chart(ctx, {
+                type: "bar",
+                data: { labels: [], datasets: [] }
+            });
+            return;
+        }
+        // Group by shift and category
+        const shifts = [...new Set(records.map(r => r.shift))];
+        const categories = ["matex", "avance", "hrpro", "leave"];
+        const dataByShift = shifts.map(shift => {
+            return categories.map(cat => {
+                return records.filter(r => r.shift === shift).reduce((sum, r) => sum + (parseInt(r[cat] || r['leaveAbsent']) || 0), 0);
+            });
+        });
+        const ctx = document.getElementById("yearlyChart").getContext("2d");
+        if (yearlyChart) yearlyChart.destroy();
+        yearlyChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: categories.map(c => c.replace("Absent", " Absent").replace("matex", "Matex").replace("avance", "Avance").replace("hrpro", "HRPro")),
+                datasets: shifts.map((shift, i) => ({
+                    label: shift.charAt(0).toUpperCase() + shift.slice(1) + " Shift",
+                    data: dataByShift[i],
+                    backgroundColor: i === 0 ? "#667eea" : "#f093fb"
+                }))
+            },
+            options: {
+                plugins: { title: { display: true, text: `Monthly Absence Chart (${year}${monthVal && monthVal!=='all' ? ' - ' + monthVal : ''})` } },
+                responsive: true
+            }
+        });
+    }
+
+        // Monthly selector for yearly comparison
+            function setupYearlyMonthSelector() {
+            const sel = document.getElementById('yearlyMonth');
+            if (!sel) return;
+            sel.innerHTML = '';
+            const optAll = document.createElement('option');
+            optAll.value = 'all';
+            optAll.textContent = 'All Months';
+            sel.appendChild(optAll);
+
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const currentYear = new Date().getFullYear();
+
+            // build options using numeric month value YYYY-MM (zero-padded) but readable label YYYY-MonthName
+            months.forEach((m, idx) => {
+                const monthIndex = String(idx + 1).padStart(2, '0'); // "01".."12"
+                const o = document.createElement('option');
+                o.value = `${currentYear}-${monthIndex}`;   // proper API format YYYY-MM
+                o.textContent = `${currentYear} - ${m}`;
+                // store month index for later convenient updates when year changes
+                o.dataset.monthIndex = monthIndex;
+                sel.appendChild(o);
+            });
+
+            // When month selection changes, reload current year comparison
+            sel.addEventListener('change', () => {
+                const y = parseInt(document.getElementById('yearSelect').value, 10);
+                loadYearlyComparison(y);
+            });
+
+            // Also reload monthly list when yearSelect changes
+            const yearEl = document.getElementById('yearSelect');
+            if (yearEl) {
+                yearEl.addEventListener('change', (e) => {
+                    const chosenYear = e.target.value;
+                    // update month option values to use chosen year while keeping the same month index
+                    Array.from(sel.options).forEach(opt => {
+                        if (opt.value !== 'all') {
+                            const idx = opt.dataset.monthIndex || opt.value.split('-')[1] || '';
+                            opt.value = `${chosenYear}-${idx}`;
+                            // keep text showing chosen year with month name (text already contains month name)
+                            const parts = opt.textContent.split('-').map(s => s.trim());
+                            if (parts.length === 2) opt.textContent = `${chosenYear} - ${parts[1]}`;
+                        }
+                    });
+                    loadYearlyComparison(parseInt(chosenYear, 10));
+                });
+            }
+        }
+
+        // Populate year dropdown and load chart
+        function setupYearDropdown() {
+            const yearSelect = document.getElementById("yearSelect");
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = "";
+            for (let y = currentYear; y >= currentYear - 15; y--) {
+                const opt = document.createElement("option");
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            yearSelect.value = currentYear;
+            yearSelect.addEventListener("change", e => loadYearlyComparison(e.target.value));
+            loadYearlyComparison(currentYear);
+        }
+
+    // Initialize yearly chart on page load
+    window.addEventListener("DOMContentLoaded", () => { setupYearDropdown(); setupYearlyMonthSelector(); setupYearCompareSelectors();});
+   // setup year selectors
+function setupYearCompareSelectors() {
+    const fromSel = document.getElementById('yearCompareFrom');
+    const toSel   = document.getElementById('yearCompareTo');
+    const now = new Date().getFullYear();
+
+    // populate dropdowns (last 6 years)
+    for (let y = now; y >= now - 5; y--) {
+        fromSel.innerHTML += `<option value="${y}">${y}</option>`;
+        toSel.innerHTML   += `<option value="${y}">${y}</option>`;
+    }
+
+    // default: previous year vs current year
+    fromSel.value = now - 1;
+    toSel.value = now;
+
+    // handle compare button click
+    document.getElementById('btnCompareYears').addEventListener('click', () => {
+        loadMonthComparison();
+    });
+}
+
+// fetch and prepare month comparison data
+async function loadMonthComparison() {
+    const yearA = parseInt(document.getElementById('yearCompareFrom').value);
+    const yearB = parseInt(document.getElementById('yearCompareTo').value);
+
+    const years = [yearA, yearB];
+    const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    // fetch both years in parallel
+    const promises = years.map(y => fetch(`${API_URL}?year=${y}`).then(r => r.json()));
+    const results = await Promise.all(promises);
+
+    // aggregate per month
+    const aggregated = results.map(records => {
+        const byMonth = Array(12).fill(0);
+        records.forEach(r => {
+            if (selectedShift !== 'all' && r.shift !== selectedShift) return;
+            const dt = new Date(r.date);
+            const m = dt.getMonth();
+            byMonth[m] += parseInt(r.totalAbsent) || 0;
+        });
+        return byMonth;
+    });
+
+    renderMonthComparison(monthLabels, years, aggregated);
+}
+
+// render chart with Chart.js
+let monthCompareChartInstance = null;
+function renderMonthComparison(labels, years, datasets) {
+    const ctx = document.getElementById('monthCompareChart').getContext('2d');
+    if (monthCompareChartInstance) monthCompareChartInstance.destroy();
+
+    monthCompareChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: years.map((y, idx) => ({
+                label: y,
+                data: datasets[idx],
+                backgroundColor: idx === 0 ? "rgba(102,126,234,0.8)" : "rgba(240,147,251,0.8)"
+            }))
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: {
+                        display: true,
+                        text: `Yearly Absence Comparison (${years[0]} vs ${years[1]})`
+                    }
+                }
+            }
+        });
+    }
+
+        // initialize on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            setupYearCompareSelectors();
+        });
+        // do not load month comparison on initial DOMContentLoaded because report section may be hidden;
+        // month comparison is loaded when the monthly report is shown (see generateMonthlyReport / viewCurrentMonth)
+
+        // Export data as CSV
+        async function exportData() {
+        try {
+            const res = await fetch(`${API_URL}?report=all`);
+            if (!res.ok) throw new Error('Failed to fetch records');
+            const records = await res.json();
+            if (!records || !records.length) {
+                alert('No records to export');
+                return;
+            }
+
+        // Convert to CSV (exclude id if present)
+        const header = Object.keys(records[0]).filter(k => k !== 'id');
+        const rows = records.map(r => header.map(h => {
+        const v = r[h] === null || r[h] === undefined ? '' : String(r[h]);
+            // escape quotes
+            return '"' + v.replace(/"/g, '""') + '"';
+        }).join(','));
+        const csv = [header.join(','), ...rows].join('\r\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `absences_data_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        }   catch (err) {
+        console.error(err);
+        alert('Export failed: ' + (err.message || err));
+        }
+        }
+
+            window.addEventListener('DOMContentLoaded', () => { setupYearCompareSelectors(); });
+
+            async function exportReportPDF() {
+            const { jsPDF } = window.jspdf || window.jspdf ? window.jspdf : window.jspdf = window.jspdf || window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const margin = 12;
+            let y = 18;
+
+            // Title    
+            doc.setFontSize(16);
+            doc.text('Monthly Absence Report', 105, y, { align: 'center' });
+            y += 8;
+
+            // Month info
+            const month = document.getElementById('reportMonth').value || '';
+            doc.setFontSize(10);
+            doc.text(`Month: ${month}`, margin, y);
+            y += 6;
+
+            // Summary text
+            const summaryEl = document.getElementById('monthlyStats');
+            const summaryLines = Array.from(summaryEl.querySelectorAll('p')).map(p => p.textContent.trim());
+            doc.setFontSize(10);
+            for (const line of summaryLines) {
+                doc.text(line, margin, y);
+                y += 6;
+            }
+            y += 4;
+
+            // Helper: add canvas as image with scaling
+            async function addCanvasToPDF(canvasId, title) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const imgProps = doc.getImageProperties(dataUrl);
+                const pdfWidth = doc.internal.pageSize.getWidth() - margin*2;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                if (y + pdfHeight > doc.internal.pageSize.getHeight() - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+                doc.setFontSize(11);
+                doc.text(title, margin, y);
+                y += 6;
+                doc.addImage(dataUrl, 'PNG', margin, y, pdfWidth, pdfHeight);
+                y += pdfHeight + 8;
+            }
+
+            // Add charts
+            await addCanvasToPDF('monthlyChart', 'Category Totals');
+            await addCanvasToPDF('trendChart', 'Daily Absences Trend');
+            await addCanvasToPDF('percentageChart', 'Daily Absence Percentage');
+
+            // Footer
+            const now = new Date();
+            doc.setFontSize(9);
+            doc.text(`Generated: ${now.toLocaleString()}`, margin, doc.internal.pageSize.getHeight() - 10);
+            doc.save(`monthly_report_${month || 'report'}.pdf`);
+            }
+
+            async function exportReportExcel() {
+    try {
+        const month = document.getElementById('reportMonth').value;
+        if (!month) { showToast('Select a month first', 1600); return; }
+
+        // fetch records for the month (apply current selectedShift filter server-side or client-side)
+        let url = `${API_URL}?month=${month}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch month data');
+        let records = await res.json();
+        // apply client-side shift filter if needed
+        if (typeof selectedShift !== 'undefined' && selectedShift !== 'all') {
+            records = records.filter(r => r.shift === selectedShift);
+        }
+        if (!Array.isArray(records) || records.length === 0) {
+            showToast('No data to export for selected month/shift', 1800);
+            return;
+        }
+
+        // Build workbook and data sheet
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Absence Monitoring';
+        const ws = workbook.addWorksheet('Monthly Data');
+
+        // Fixed header (keeps consistent column order)
+        const header = ['Date','Shift','Total Employees','Total Absent','Matex','Avance','HRPro','LeaveAbsent'];
+        ws.addRow(header);
+        // Add rows
+        for (const r of records) {
+            ws.addRow([
+                r.date || '',
+                r.shift || '',
+                (r.totalEmployees || r.totalEmp || r.tEmp) || 0,
+                (r.totalAbsent || 0),
+                (r.matex || 0),
+                (r.avance || 0),
+                (r.hrpro || r.hrPro || 0),
+                (r.leaveAbsent || r.leave || 0)
+            ]);
+        }
+        // styling
+        ws.getRow(1).font = { bold: true };
+        header.forEach((h,i) => ws.getColumn(i+1).width = Math.max(12, Math.min(24, h.length + 8)));
+
+        // Add chart images on a separate sheet (if canvases exist)
+        const charts = [
+            { id: 'monthlyChart', title: 'Category Totals' },
+            { id: 'trendChart', title: 'Daily Absences Trend' },
+            { id: 'percentageChart', title: 'Daily Absence Percentage' }
+        ];
+
+        const imgSheet = workbook.addWorksheet('Charts');
+        let rowPos = 0;
+        for (const c of charts) {
+            const canvas = document.getElementById(c.id);
+            if (!canvas) continue;
+            // ensure canvas painted
+            const dataUrl = canvas.toDataURL('image/png', 1.0);
+            const base64 = dataUrl.split(',')[1];
+            const imageId = workbook.addImage({ base64: base64, extension: 'png' });
+
+            // place image; adjust ext width/height to fit reasonably in Excel pixels
+            // each Excel column width ~7-9 px; placing at col 0,row rowPos
+            imgSheet.addImage(imageId, { tl: { col: 0, row: rowPos }, ext: { width: 900, height: 320 } });
+            // leave some empty rows below the image
+            rowPos += Math.ceil(320 / 20) + 3;
+        }
+
+        // generate and download
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), `monthly_report_${month}.xlsx`);
+        showToast('Excel exported', 1400);
+    } catch (err) {
+        console.error('Export Excel failed', err);
+        alert('Export failed: ' + (err.message || err));
+    }
+}
+
+document.getElementById('exportExcelBtn').addEventListener('click', exportReportExcel);
+        </script>
+        </body>
+        </html>

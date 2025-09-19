@@ -1,0 +1,40 @@
+  [29-Aug-2025 03:11:46 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\absencesmonitoring\upload.php:115
+  Stack trace:
+  #0 C:\xampp\htdocs\absencesmonitoring\upload.php(115): mysqli_stmt->bind_param('ssiiiiiii', '2025-08-30', 'day', 682, 3, 1, 1, 1, 0)
+  #1 {main}
+    thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 115
+  [01-Sep-2025 08:25:29 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-08-30-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+  Stack trace:
+  #0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+  #1 {main}
+    thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+  [01-Sep-2025 08:25:30 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-08-30-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+  Stack trace:
+  #0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+  #1 {main}
+    thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+  [01-Sep-2025 08:25:30 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-08-30-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+  Stack trace:
+  #0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+  #1 {main}
+    thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+  [01-Sep-2025 08:31:57 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-08-30-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+  Stack trace:
+  #0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+  #1 {main}
+    thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+[02-Sep-2025 05:43:29 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-08-30-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+Stack trace:
+#0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+[11-Sep-2025 11:12:33 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-09-03-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:128
+Stack trace:
+#0 C:\xampp\htdocs\absencesmonitoring\upload.php(128): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 128
+[11-Sep-2025 11:15:42 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Duplicate entry '2025-09-03-night' for key 'date' in C:\xampp\htdocs\absencesmonitoring\upload.php:118
+Stack trace:
+#0 C:\xampp\htdocs\absencesmonitoring\upload.php(118): mysqli_stmt->execute()
+#1 {main}
+  thrown in C:\xampp\htdocs\absencesmonitoring\upload.php on line 118

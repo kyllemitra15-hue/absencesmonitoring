@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absence Monitoring System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        .navbar {
+                background: #4CAF50;
+                padding: 12px;
+                text-align: center;
+                margin-bottom: 20px;
+                border-radius: 6px;
+        }
+        .navbar a {
+                color: white;
+                text-decoration: none;
+                font-weight: bold;
+                margin: 0 15px;
+                font-size: 16px;
+        }
+        .navbar a:hover {
+                text-decoration: underline;
+        }
+        </style>
+
+</head>
+<div class="navbar">            
+        <a href="absence-monitoring-system.html">🏠Home</a>
+        <a href="daily-report.html">📋 Daily Monitoring</a>
+        <a href="monthly-report.html">📊 Monthly Report</a>
+        <a href="manpower.html">📊 Manpower</a>
+        <a href="index.html">📂 Upload File</a>
+        <a href="employees.php">📂 All Records</a>
+        <a href="manpower.php">📂 MP Records</a>
+        </div>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <div class="flex items-center justify-between mb-6">
+            <button id="btnBack" onclick="goBack()" aria-label="Go back" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded shadow-sm">
+                ← Back
+            </button>
+            <h1 class="text-3xl font-bold">Upload Absence Data</h1>
+            <!-- spacer to keep title centered -->
+            <div style="width:72px;"></div>
+        </div>
+        
+        <!-- Excel Upload Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Import Excel File</h2>
+           <input type="file" id="excelUpload" name="excel_file" accept=".xlsx,.xls">
+            <button onclick="processExcel()" class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+                Process File
+            </button>
+            
+            <div id="uploadStatus" class="mt-3 text-sm"></div>
+        </div>
+
+        <!-- Data Visualization -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Absence Summary</h2>
+                <canvas id="absenceChart" width="400" height="300"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Recent Records</h2>
+                <div id="dataTable" class="overflow-x-auto">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Process uploaded Excel file
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // fallback to main app page
+                window.location.href = 'absence-monitoring-system.html';
+            }
+        }
+        function processExcel() {
+            const file = document.getElementById('excelUpload').files[0];
+            if (!file) {
+                document.getElementById('uploadStatus').innerHTML = '<p class="text-red-500">Please select a file first.</p>';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                // Validate required fields
+                if (!jsonData[0] || !jsonData[0].Date || !jsonData[0].Shift) {
+                    document.getElementById('uploadStatus').innerHTML = '<p class="text-red-500">Invalid format: Missing Date or Shift columns.</p>';
+                    return;
+                }
+
+                    // Send to server
+                    const btn = document.querySelector('button[onclick="processExcel()"]');
+                    if (btn) btn.disabled = true;
+                    document.getElementById('uploadStatus').innerHTML = '<p class="text-gray-600">Processing file...</p>';
+                    fetch('upload.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(jsonData)
+                    })
+                    .then(async response => {
+                        let payload;
+                        try {
+                            payload = await response.json();
+                        } catch (err) {
+                            throw new Error('Invalid JSON response from server');
+                        }
+                        // Normalize response
+                        if (payload.success) {
+                            const imported = payload.imported ?? payload.count ?? 0;
+                            let msg = `<p class="text-green-500">Imported ${imported} record(s).</p>`;
+                            if (payload.errors && payload.errors.length) {
+                                msg += '<details><summary style="cursor:pointer;color:#b91c1c">Errors ('+payload.errors.length+')</summary><ul style="color:#b91c1c">' + payload.errors.map(e=>'<li>'+e+'</li>').join('') + '</ul></details>';
+                            }
+                            document.getElementById('uploadStatus').innerHTML = msg;
+                            updateVisualizations();
+                        } else {
+                            const errMsg = payload.error || (payload.errors && payload.errors.join('; ')) || JSON.stringify(payload);
+                            document.getElementById('uploadStatus').innerHTML = `<p class="text-red-500">Upload failed: ${errMsg}</p>`;
+                        }
+                    })
+                    .catch(err => {
+                        document.getElementById('uploadStatus').innerHTML = `<p class="text-red-500">Upload error: ${err.message}</p>`;
+                    })
+                    .finally(()=>{ if (btn) btn.disabled = false; });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Update charts and tables
+       function updateVisualizations() {
+    fetch('get_absences.php')
+        .then(response => response.json())
+        .then(payload => {
+            if (!payload.success) {
+                console.error("API error", payload);
+                return;
+            }
+            renderTable(payload.recent);   // show recent records
+            renderChart(payload.summary);  // show summary chart
+        })
+        .catch(err => {
+            console.error("Fetch failed", err);
+        });
+}
+
+
+      function renderTable(data) {
+      let html = `<table class="min-w-full divide-y divide-gray-200">
+        <thead><tr>
+            <th class="px-4 py-2">Date</th>
+            <th class="px-4 py-2">Shift</th>
+            <th class="px-4 py-2">Absent</th>
+            <th class="px-4 py-2">Total Employees</th>
+        </tr></thead><tbody>`;
+    
+      data.forEach(row => {
+      html += `<tr>
+            <td class="px-4 py-2">${row.date}</td>
+            <td class="px-4 py-2">${row.shift}</td>
+            <td class="px-4 py-2">${row.totalAbsent}</td>
+            <td class="px-4 py-2">${row.totalEmployees}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    document.getElementById('dataTable').innerHTML = html;
+}
+
+let absenceChart;
+
+function renderChart(summary) {
+    const ctx = document.getElementById('absenceChart').getContext('2d');
+    const labels = ["Matex", "Avance", "HRPro", "Leave"];
+    const values = [
+        parseInt(summary.matex || 0),
+        parseInt(summary.avance || 0),
+        parseInt(summary.hrpro || 0),
+        parseInt(summary.leave || 0)
+    ];
+
+    if (absenceChart) {
+        absenceChart.destroy();
+    }
+
+    absenceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Absences',
+                data: values
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+    </script>
+</body>
+</html>
+
